@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
         try {
             const result = await sql`SELECT data FROM user_data WHERE user_id = ${payload.userId}`;
-            res.status(200).json(result.rows[0]?.data || {});
+            res.status(200).json(result[0]?.data || {});
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: 'Server error' });
