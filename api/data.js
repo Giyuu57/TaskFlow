@@ -1,6 +1,6 @@
 const { sql } = require('../lib/db');
 const { verifyToken, getTokenFromReq } = require('../lib/auth');
-const { getJsonBody } = require('../lib/pareBody');
+const { getJsonBody } = require('../lib/parseBody');
 
 module.exports = async (req, res) => {
     const token = getTokenFromReq(req);

@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const { sql } = require('../lib/db');
 const { signToken } = require('../lib/auth');
-const { getJsonBody } = require('../lib/pareBody');
+const { getJsonBody } = require('../lib/parseBody');
 
 module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
