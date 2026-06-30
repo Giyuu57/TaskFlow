@@ -1,30 +1,41 @@
 const { sql } = require('../lib/db');
-const { verifyToken, getTokenFromReq } = require('../lib/auth');
-const { getJsonBody } = require('../lib/parseBody');
+const { parseBody, getAuthPayload } = require('../lib/auth');
 
-module.exports = async (req, res) => {
-    const token = getTokenFromReq(req);
-    const payload = token ? verifyToken(token) : null;
-    if (!payload) return res.status(401).json({ error: 'Not authenticated' });
+module.exports = async function handler(req, res) {
+  try {
+    const payload = getAuthPayload(req);
+
+    if (!payload) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
 
     if (req.method === 'GET') {
-        try {
-            const result = await sql`SELECT data FROM user_data WHERE user_id = ${payload.userId}`;
-            res.status(200).json(result.rows[0]?.data || {});
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: 'Server error' });
-        }
-    } else if (req.method === 'POST') {
-        try {
-            const body = await getJsonBody(req);
-            await sql`UPDATE user_data SET data = ${JSON.stringify(body)}::jsonb, updated_at = NOW() WHERE user_id = ${payload.userId}`;
-            res.status(200).json({ ok: true });
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ error: 'Server error' });
-        }
-    } else {
-        res.status(405).json({ error: 'Method not allowed' });
+      const rows = await sql`
+        SELECT data
+        FROM user_data
+        WHERE user_id = ${payload.userId}
+        LIMIT 1
+      `;
+
+      return res.status(200).json(rows[0]?.data || {});
     }
+
+    if (req.method === 'POST') {
+      const data = parseBody(req);
+
+      await sql`
+        INSERT INTO user_data (user_id, data, updated_at)
+        VALUES (${payload.userId}, ${JSON.stringify(data)}::jsonb, NOW())
+        ON CONFLICT (user_id)
+        DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
+      `;
+
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (err) {
+    console.error('Data API error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
 };
