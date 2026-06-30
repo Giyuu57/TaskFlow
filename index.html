@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Your Personal Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="light">
+    <div id="auth-view" class="auth-container">
+        <div class="auth-card">
+            <div class="logo" style="justify-content:center; margin-bottom:1.5rem;">
+                <span>📅</span><span>TaskFlow</span>
+            </div>
+            <div id="auth-error" class="auth-error hidden"></div>
+
+            <div id="login-form">
+                <h2 style="margin-bottom:1rem;">Log In</h2>
+                <input type="email" class="input-field" id="login-email" placeholder="Email" style="margin-bottom:0.75rem; width:100%;">
+                <input type="password" class="input-field" id="login-password" placeholder="Password" style="margin-bottom:1rem; width:100%;">
+                <button class="btn-primary" style="width:100%;" onclick="handleLogin()">Log In</button>
+                <p style="margin-top:1rem; text-align:center;">No account? <a href="#" onclick="toggleAuthForm('signup')">Sign up</a></p>
+            </div>
+
+            <div id="signup-form" class="hidden">
+                <h2 style="margin-bottom:1rem;">Sign Up</h2>
+                <input type="email" class="input-field" id="signup-email" placeholder="Email" style="margin-bottom:0.75rem; width:100%;">
+                <input type="password" class="input-field" id="signup-password" placeholder="Password (min 6 chars)" style="margin-bottom:1rem; width:100%;">
+                <button class="btn-primary" style="width:100%;" onclick="handleSignup()">Sign Up</button>
+                <p style="margin-top:1rem; text-align:center;">Already have an account? <a href="#" onclick="toggleAuthForm('login')">Log in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-root" class="hidden">
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">
+                <span>📅</span>
+                <span>TaskFlow</span>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-nav active" onclick="showView('calendar')">Calendar</button>
+                <button class="btn btn-nav" onclick="showView('tracker')">Tracker</button>
+                <button class="icon-btn" onclick="toggleDarkMode()">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <span id="user-email" style="opacity:0.7; font-size:0.9rem;"></span>
+                <button class="btn btn-nav" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Calendar View -->
+        <div id="calendar-view">
+            <div class="toolbar">
+                <div class="search-box">
+                    <input type="text" class="input-field" id="search-input" placeholder="Search tasks...">
+                </div>
+                <button class="icon-btn" onclick="toggleStats()" title="Toggle Stats">📊</button>
+                <button class="icon-btn" onclick="exportData()" title="Export Data">⬇️</button>
+                <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Import Data">⬆️</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+
+            <div id="stats-panel" class="hidden">
+                <div class="card">
+                    <h3 class="section-title">Quick Stats</h3>
+                    <div class="stats-grid">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #3b82f6;" id="stat-days">0</div>
+                            <div style="opacity: 0.7; font-size: 0.875rem;">Days Tracked</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #10b981;" id="stat-important">0</div>
+                            <div style="opacity: 0.7; font-size: 0.875rem;">Important Days</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #8b5cf6;" id="stat-goals">0</div>
+                            <div style="opacity: 0.7; font-size: 0.875rem;">Active Goals</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; font-weight: bold; color: #f59e0b;" id="stat-streak">0</div>
+                            <div style="opacity: 0.7; font-size: 0.875rem;">Day Streak</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="calendar-header">
+                <button class="icon-btn" onclick="changeMonth(-1)">◀️</button>
+                <h2 id="month-year"></h2>
+                <button class="icon-btn" onclick="changeMonth(1)">▶️</button>
+            </div>
+
+            <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+
+        <!-- Day View -->
+        <div id="day-view" class="hidden">
+            <button class="btn btn-nav" onclick="showView('calendar')" style="margin-bottom: 1.5rem;">← Back to Calendar</button>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                    <div>
+                        <h2 id="selected-date-title" style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem;"></h2>
+                        <p style="opacity: 0.7;">Stay focused and achieve your goals!</p>
+                    </div>
+                    <button class="icon-btn" onclick="toggleImportant()" id="star-btn">⭐</button>
+                </div>
+
+                <!-- Mood Tracker -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-weight: 600; margin-bottom: 0.75rem;">⚡ How are you feeling today?</h3>
+                    <div class="mood-buttons">
+                        <button class="mood-btn happy" onclick="setMood('happy')">😊</button>
+                        <button class="mood-btn neutral" onclick="setMood('neutral')">😐</button>
+                        <button class="mood-btn sad" onclick="setMood('sad')">☹️</button>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="font-weight: 600;">Daily Progress</span>
+                        <span id="progress-text">0/10 tasks</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Tasks -->
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
+                    <button class="btn btn-nav" style="font-size: 0.8rem; opacity: 0.7;" onclick="clearAllDefaultsForDay()">Remove all preset tasks for today</button>
+                </div>
+                <div id="tasks-container"></div>
+
+                <!-- Add Custom Task -->
+                <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                    <input type="text" class="input-field" id="new-task-input" placeholder="Add a custom task..." onkeypress="if(event.key==='Enter') addCustomTask()">
+                    <button class="btn-primary" onclick="addCustomTask()">➕</button>
+                </div>
+
+                <!-- Daily Notes -->
+                <div style="margin-top: 1.5rem;">
+                    <h3 style="font-weight: 600; margin-bottom: 0.75rem;">📖 Daily Notes</h3>
+                    <textarea id="notes-textarea" placeholder="Write your thoughts, reflections, or anything memorable about today..."></textarea>
+                </div>
+
+                <!-- Reminder -->
+                <div style="margin-top: 1.5rem;">
+                    <h3 style="font-weight: 600; margin-bottom: 0.75rem;">🔔 Reminder</h3>
+                    <input type="text" class="input-field" id="reminder-input" placeholder="Set a reminder for this day...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracker View -->
+        <div id="tracker-view" class="hidden">
+            <h2 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 2rem;">Self Improvement Tracker</h2>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card orange">
+                    <div style="font-size: 3rem;">🔥</div>
+                    <div class="stat-value" id="streak-value">0</div>
+                    <div style="opacity: 0.7;">Current Streak</div>
+                </div>
+                <div class="stat-card blue">
+                    <div style="font-size: 3rem;">🏆</div>
+                    <div class="stat-value" id="total-tasks">0</div>
+                    <div style="opacity: 0.7;">Tasks Completed</div>
+                </div>
+                <div class="stat-card green">
+                    <div style="font-size: 3rem;">🎯</div>
+                    <div class="stat-value" id="goals-progress">0/0</div>
+                    <div style="opacity: 0.7;">Goals Achieved</div>
+                </div>
+            </div>
+
+            <!-- Quote -->
+            <div class="quote-card" id="motivational-quote"></div>
+
+            <!-- 7-Day Chart -->
+            <div class="card">
+                <h3 class="section-title">7-Day Progress</h3>
+                <div class="chart" id="chart-container"></div>
+            </div>
+
+            <!-- Mood Overview -->
+            <div class="card" id="mood-overview"></div>
+
+            <!-- Goals -->
+            <div class="card">
+                <h3 class="section-title">🎯 Personal Goals</h3>
+                <div id="goals-container"></div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <input type="text" class="input-field" id="new-goal-input" placeholder="Add a new goal..." onkeypress="if(event.key==='Enter') addGoal()">
+                    <button class="btn-primary" onclick="addGoal()">➕</button>
+                </div>
+            </div>
+
+            <!-- Habits -->
+            <div class="card">
+                <h3 class="section-title">⚡ Habit Tracker</h3>
+                <div id="habits-container"></div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <input type="text" class="input-field" id="new-habit-input" placeholder="Add a new habit to track..." onkeypress="if(event.key==='Enter') addHabit()">
+                    <button class="btn-primary" onclick="addHabit()">➕</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
