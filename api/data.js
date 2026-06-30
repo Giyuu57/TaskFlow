@@ -1,5 +1,6 @@
 const { sql } = require('../lib/db');
 const { verifyToken, getTokenFromReq } = require('../lib/auth');
+const { getJsonBody } = require('../lib/parseBody');
 
 module.exports = async (req, res) => {
     const token = getTokenFromReq(req);
@@ -16,7 +17,8 @@ module.exports = async (req, res) => {
         }
     } else if (req.method === 'POST') {
         try {
-            await sql`UPDATE user_data SET data = ${JSON.stringify(req.body)}::jsonb, updated_at = NOW() WHERE user_id = ${payload.userId}`;
+            const body = await getJsonBody(req);
+            await sql`UPDATE user_data SET data = ${JSON.stringify(body)}::jsonb, updated_at = NOW() WHERE user_id = ${payload.userId}`;
             res.status(200).json({ ok: true });
         } catch (err) {
             console.error(err);

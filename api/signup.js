@@ -1,10 +1,11 @@
 const bcrypt = require('bcryptjs');
 const { sql } = require('../lib/db');
 const { signToken } = require('../lib/auth');
+const { getJsonBody } = require('../lib/parseBody');
 
 module.exports = async (req, res) => {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-    const { email, password } = req.body;
+    const { email, password } = await getJsonBody(req);
     if (!email || !password || password.length < 6) {
         return res.status(400).json({ error: 'Email and password (min 6 chars) required' });
     }
