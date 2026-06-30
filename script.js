@@ -12,6 +12,7 @@ let currentMonth = new Date();
 let selectedDate = null;
 let currentView = 'calendar';
 let saveTimeout = null;
+let authLoading = false;
 
 // ---------- AUTH ----------
 async function checkAuth() {
@@ -55,42 +56,68 @@ function showAuthError(msg) {
 }
 
 async function handleSignup() {
+    if (authLoading) return;
+    authLoading = true;
+
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
+
     try {
         const res = await fetch('/api/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
+            cache: 'no-store',
             body: JSON.stringify({ email, password })
         });
+
         const data = await res.json();
-        if (!res.ok) return showAuthError(data.error || 'Signup failed');
+
+        if (!res.ok) {
+            showAuthError(data.error || 'Signup failed');
+            return;
+        }
+
         document.getElementById('user-email').textContent = data.email;
         await loadDataFromServer();
         showApp();
-    } catch {
+    } catch (err) {
         showAuthError('Network error. Try again.');
+    } finally {
+        authLoading = false;
     }
 }
 
 async function handleLogin() {
+    if (authLoading) return;
+    authLoading = true;
+
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
+
     try {
         const res = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
+            cache: 'no-store',
             body: JSON.stringify({ email, password })
         });
+
         const data = await res.json();
-        if (!res.ok) return showAuthError(data.error || 'Login failed');
+
+        if (!res.ok) {
+            showAuthError(data.error || 'Login failed');
+            return;
+        }
+
         document.getElementById('user-email').textContent = data.email;
         await loadDataFromServer();
         showApp();
-    } catch {
+    } catch (err) {
         showAuthError('Network error. Try again.');
+    } finally {
+        authLoading = false;
     }
 }
 
@@ -101,18 +128,36 @@ async function handleLogout() {
 
 async function loadDataFromServer() {
     try {
-        const res = await fetch('/api/data', { credentials: 'include' });
+        const res = await fetch('/api/data', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+
         if (res.ok) {
             const data = await res.json();
+
             appData = {
-                tasks: {}, customTasks: {}, importantDates: [], notes: {}, reminders: {},
-                mood: {}, goals: [], habits: [], deletedDefaults: {}, darkMode: false,
+                tasks: {},
+                customTasks: {},
+                importantDates: [],
+                notes: {},
+                reminders: {},
+                mood: {},
+                goals: [],
+                habits: [],
+                deletedDefaults: {},
+                darkMode: false,
                 ...data
             };
+
             if (appData.darkMode) {
                 document.body.classList.add('dark');
                 document.body.classList.remove('light');
                 document.getElementById('theme-icon').textContent = '☀️';
+            } else {
+                document.body.classList.add('light');
+                document.body.classList.remove('dark');
+                document.getElementById('theme-icon').textContent = '🌙';
             }
         }
     } catch (err) {
