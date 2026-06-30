@@ -300,7 +300,7 @@ textarea {
 body.light textarea { background: #f3f4f6; color: #1f2937; }
 body.dark textarea { background: #374151; color: white; }
 
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 .quote-card {
     background: linear-gradient(to bottom right, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
